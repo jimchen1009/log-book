@@ -65,6 +65,7 @@ directories[4]=.git
 
 echo
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
+no_change=`git stash save Jim $(date +%Y%m%d) | grep -E "No|没有"` #暂时使用这两个关键字
 git reset --hard
 git pull --rebase
 
@@ -88,6 +89,10 @@ echo -e "----->> \033[33m通过git查看文件差异, 关闭git再按回车结�
 read 
 git reset --hard origin/${current_branch}
 git pull --rebase
+if [[ "$no_change" == "" ]] 
+then
+	echo -e "----->> \033[31还原本地保存的修改...\033[0m"
+	git stash pop
+fi
 rm -rf $copy_path
-read 
 
