@@ -67,14 +67,8 @@ then
 fi
 echo ${version}
 
-# 删除下面的目录，应该没有重名的
-declare -a directories
-directories[0]=build
-directories[1]=gradle
-directories[2]=out
-directories[3]=.gradle
-directories[4]=.settings
-directories[4]=.git
+# 复制的目录
+directories=(configs,resources,src,env,proto,tsssdk,thrift,META-INF,WEB-INF)
 
 echo
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
@@ -86,13 +80,18 @@ current=`date "+%Y-%m-%d_%H%M%S"`
 copy_path=$path/${project}_${current}
 rm -rf $copy_path
 mkdir $copy_path
-cp -r $dic_path/. $copy_path
-rm -rf $copy_path/.git
-for directory in ${directories[@]}
+for file in $dic_path/*
 do
-   rm -rf $copy_path/$directory
+	if [ -d "$file" ]
+	then
+		name=`basename $file`
+		if [[ "${directories[@]}"  =~ "$name" ]]; then
+			cp -r $file $copy_path
+		fi
+	else
+		cp -r $file $copy_path
+	fi
 done
-rm -rf $copy_path/.gradle
 git reset --hard $version
 cp -r $copy_path/. $dic_path/.
 
