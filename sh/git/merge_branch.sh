@@ -73,7 +73,6 @@ check_change=`git status -s`
 
 echo "工程名: 【${project}】 来源: ${from_branch} 目标: ${to_branch} 变更结果如下: " >> ${filename}
 echo "${check_change}" >> ${filename}
-echo "|----------------------------------------------------------------------------------------------|" >> ${filename}
 echo "" >> ${filename}
 echo "" >> ${filename}
 

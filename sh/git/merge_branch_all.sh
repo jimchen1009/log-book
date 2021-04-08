@@ -9,7 +9,8 @@ touch $log_file
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
 echo "" >> ${log_file}
-echo "		------<<开始操作标记位置 [${current1}]>>------		" >> ${log_file}
+echo "==================================================== <<开始操作标记位置 [${current1}]>> ====================================================" >> ${log_file}
+echo "" >> ${log_file}
 
 projects=(`echo $allprojects | tr ',' ' '`)
 for (( i = 0 ; i < ${#projects[@]}; i++ ))
