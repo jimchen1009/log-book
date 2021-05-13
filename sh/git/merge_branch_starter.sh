@@ -12,6 +12,19 @@ if [[ "$3" == bt ]]
 then
 	allprojects=$bt_allprojects
 fi
+echo $allprojects
 
+webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=693axxx6-7aoc-4bc4-97a0-0ec2sifa5aaa"
+start_message="【服务端】开始合并【${from_branch}】到【${to_branch}】,【暂停提交】."
+
+./webhook_sender.sh $webhook_url $start_message
 ./merge_branch_all.sh $allprojects $from_branch $to_branch
 
+echo -e "----->> \033[31m完成合并请输入: Okay \033[0m"
+read finishCode
+
+if [[ "$finishCode" == Okay ]] 
+then
+	finish_message="【服务端】完成合并【${from_branch}】到【${to_branch}】,【恢复提交】."
+	./webhook_sender.sh $webhook_url $finish_message
+fi
