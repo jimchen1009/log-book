@@ -51,7 +51,7 @@ do
 		do
 			for author in `git log --since "${commit_date}" ${file} | grep "Author:" | sort | uniq | awk -F ' ' '{print $2}'`
 			do
-				author_file=$author_commit/$author
+				author_file=${author_commit}/${author}.txt
 				if [ ! -f "$author_file" ]
 				then
 					echo "${author}" >> ${author_file}
@@ -60,7 +60,8 @@ do
 			done
 		done
 		echo -e "\033[31m工程[${project}]变更结果如下:\033[0m"
-		git reset $version
+		git diff --name-only $version
+		message=`git reset $version` #没有显示增加的文件
 	fi
 	echo ""
 done
@@ -97,21 +98,25 @@ do
 done
 
 cd $author_commit
-for author in `ls -1 .`
+for file in `ls -1 .`
 do
-	author_file=$author_commit/$author
-	webhook_title=${author_file}_message.txt
-	echo "--------------------------------------分割线以下,当前版本涉及的变更文件:" > $webhook_title
-	$tool_path/webhook_sender.sh $webhook_url $webhook_title $author
-	count=`cat ${author_file} | wc -l`
-	for((i=2;i<=$count;i+=30));  
-	do   
-		webhook_message=${author_file}_message$i.txt
-		j=`expr $i + 30`
-		cat ${author_file} | tail -n +$i | head -n 30 >> $webhook_message
-		cat $webhook_message
-	$tool_path/webhook_sender.sh $webhook_url $webhook_message
-	done 
+	author_file=$author_commit/$file
+	author_name=`cat ${author_file} | head -n 1`
+	if [[ "$author_name" != bvtpjg ]] 
+	then
+		echo "$author_name"
+		webhook_title=${author_file}_title.txt
+		echo "当前版本涉及的变更文件:" > $webhook_title
+		#$tool_path/webhook_sender.sh $webhook_url $webhook_title $author_name
+		count=`cat ${author_file} | wc -l`
+		for((i=2;i<=$count;i+=30));  
+		do   
+			webhook_message=${author_file}_message$i.txt
+			j=`expr $i + 30`
+			cat ${author_file} | tail -n +$i | head -n 30 >> $webhook_message
+		#$tool_path/webhook_sender.sh $webhook_url $webhook_message
+		done 
+	fi
 done
 
 cd $tool_path
