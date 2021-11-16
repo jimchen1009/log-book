@@ -94,6 +94,7 @@ do
 	echo "" >> ${lockfile}
 	echo "工程: ${project}" >> ${lockfile}
 	echo "commit版本号: ${version}" >> ${lockfile}
+	cd $tool_path #直接跳出去, 防止cd $path/$projects失败后用上一个目录操作
 done
 
 cd $tool_path
