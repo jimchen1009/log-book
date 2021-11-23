@@ -12,13 +12,12 @@ webhook_url=""
 
 
 declare -a projectnames
-projectnames[0]=pjg-server-config
-projectnames[1]=pjg-common
-projectnames[2]=pjg-server
-projectnames[3]=pjg-app-server
-projectnames[4]=pjg-battle-server
-projectnames[5]=pjg-rpc
-projectnames[6]=pjg-http
+projectnames[0]=server-config
+projectnames[1]=common
+projectnames[2]=server
+
+#开发通知列表
+webhook_author_list=(chenjingjun)
 
 declare -a no_changes
 
@@ -47,9 +46,10 @@ do
 		no_changes[$i]=$no_change
 		git reset --hard
 		git pull --rebase
+		echo -e "\033[31m工程[${project}]变更结果如下:\033[0m"
 		for file in `git diff --name-only $version`
 		do
-			for author in `git log --since "${commit_date}" ${file} | grep "Author:" | sort | uniq | awk -F ' ' '{print $2}'`
+			for author in `git log ${version}..HEAD -- ${file} | grep "Author:" | sort | uniq | awk -F ' ' '{print $2}'`
 			do
 				author_file=${author_commit}/${author}.txt
 				if [ ! -f "$author_file" ]
@@ -58,9 +58,8 @@ do
 				fi
 				echo "${project}  ${file}" >> ${author_file}
 			done
+			echo ${file}
 		done
-		echo -e "\033[31m工程[${project}]变更结果如下:\033[0m"
-		git diff --name-only $version
 		message=`git reset $version` #没有显示增加的文件
 	fi
 	echo ""
@@ -97,29 +96,31 @@ do
 	echo ""
 done
 
+
 cd $author_commit
 for file in `ls -1 .`
 do
 	author_file=$author_commit/$file
 	author_name=`cat ${author_file} | head -n 1`
-	if [[ "$author_name" != bvtpjg ]] 
+	if [[ "${webhook_author_list[@]}" =~ "$author_name" ]] 
 	then
 		echo "$author_name"
 		webhook_title=${author_file}_title.txt
-		echo "当前版本涉及的变更文件:" > $webhook_title
-		#$tool_path/webhook_sender.sh $webhook_url $webhook_title $author_name
+		echo "开发(${author_name})当前版本改动的文件:" > $webhook_title
+		$tool_path/webhook_sender.sh $webhook_url $webhook_title $author_name
 		count=`cat ${author_file} | wc -l`
 		for((i=2;i<=$count;i+=30));  
 		do   
 			webhook_message=${author_file}_message$i.txt
 			j=`expr $i + 30`
 			cat ${author_file} | tail -n +$i | head -n 30 >> $webhook_message
-		#$tool_path/webhook_sender.sh $webhook_url $webhook_message
+		$tool_path/webhook_sender.sh $webhook_url $webhook_message
 		done 
 	fi
 done
-
+	
 cd $tool_path
 
-echo -e "----->> \033[33m停顿3s后自动关闭. \033[0m"
-sleep 3s
+echo ""
+echo -e "----->> \033[33m停顿5s后自动关闭. \033[0m"
+sleep 5s
