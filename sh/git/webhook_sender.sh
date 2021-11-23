@@ -1,6 +1,8 @@
-webhook_url=$1
+webhook_key=$1
 webhook_message=$2
 mentioned_list=$3
+
+webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${webhook_key}"
 
 content=""
 while read -r line
@@ -16,7 +18,7 @@ char_count=${#content}
 if [ $char_count -gt 2048 ]
 then
 	content=${content: 0: 2048}
-	content="${content} ......"
+	content="${content} ........."
 fi
 	
 generate_data()

@@ -51,7 +51,7 @@ do
 		do
 			for author in `git log ${version}..HEAD -- ${file} | grep "Author:" | sort | uniq | awk -F ' ' '{print $2}'`
 			do
-				author_file=${author_commit}/${author}.txt
+				author_file=${author_commit}/${author}-${version}.txt
 				if [ ! -f "$author_file" ]
 				then
 					echo "${author}" >> ${author_file}
@@ -105,17 +105,12 @@ do
 	if [[ "${webhook_author_list[@]}" =~ "$author_name" ]] 
 	then
 		echo "$author_name"
-		webhook_title=${author_file}_title.txt
-		echo "开发(${author_name})当前版本改动的文件:" > $webhook_title
-		$tool_path/webhook_sender.sh $webhook_url $webhook_title $author_name
 		count=`cat ${author_file} | wc -l`
-		for((i=2;i<=$count;i+=30));  
-		do   
-			webhook_message=${author_file}_message$i.txt
-			j=`expr $i + 30`
-			cat ${author_file} | tail -n +$i | head -n 30 >> $webhook_message
-		$tool_path/webhook_sender.sh $webhook_url $webhook_message
-		done 
+		file_count=`expr $count - 1`
+		webhook_title=${author_file}_title.txt
+		echo "开发(${author_name})当前版本改动${file_count}个文件, 列表:" > $webhook_title
+		$tool_path/webhook_sender.sh $webhook_key $webhook_title $author_name
+		$tool_path/webhook_upload.sh $webhook_key $author_file
 	fi
 done
 	
