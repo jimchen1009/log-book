@@ -8,7 +8,7 @@ rm -rf $author_commit
 mkdir $author_commit
 
 #测试使用
-webhook_url=""
+webhook_key=""
 
 
 declare -a projectnames
@@ -20,6 +20,8 @@ projectnames[2]=server
 webhook_author_list=(chenjingjun)
 
 declare -a no_changes
+
+current=`date "+%Y%m%d%H%M"`
 
 for (( i = 0 ; i < ${#projectnames[@]}; i++ ))
 do
@@ -51,7 +53,7 @@ do
 		do
 			for author in `git log ${version}..HEAD -- ${file} | grep "Author:" | sort | uniq | awk -F ' ' '{print $2}'`
 			do
-				author_file=${author_commit}/${author}-${version}.txt
+				author_file=${author_commit}/${author}-${current}.txt
 				if [ ! -f "$author_file" ]
 				then
 					echo "${author}" >> ${author_file}
@@ -107,8 +109,8 @@ do
 		echo "$author_name"
 		count=`cat ${author_file} | wc -l`
 		file_count=`expr $count - 1`
-		webhook_title=${author_file}_title.txt
-		echo "开发(${author_name})当前版本改动${file_count}个文件, 列表:" > $webhook_title
+		webhook_title=${author_name}-title.txt
+		echo "开发(${author_name})当前版本改动${file_count}个文件, 列表文件:" > $webhook_title
 		$tool_path/webhook_sender.sh $webhook_key $webhook_title $author_name
 		$tool_path/webhook_upload.sh $webhook_key $author_file
 	fi
