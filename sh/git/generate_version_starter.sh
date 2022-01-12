@@ -54,6 +54,7 @@ projects[3]=pjg-app-server
 projects[4]=pjg-battle-server
 projects[5]=pjg-rpc
 projects[6]=pjg-http
+projects[7]=pjg-idip
 
 for project in ${projects[@]}
 do

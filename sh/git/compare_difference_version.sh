@@ -12,9 +12,14 @@ webhook_key=""
 
 
 declare -a projectnames
-projectnames[0]=server-config
-projectnames[1]=common
-projectnames[2]=server
+projectnames[0]=pjg-server-config
+projectnames[1]=pjg-rpc
+projectnames[2]=pjg-common
+projectnames[3]=pjg-server
+projectnames[4]=pjg-app-server
+projectnames[5]=pjg-battle-server
+projectnames[6]=pjg-http
+projectnames[7]=pjg-idip
 
 #开发通知列表
 webhook_author_list=(chenjingjun)
@@ -98,6 +103,9 @@ do
 	echo ""
 done
 
+mention_list=""
+webhook_title=$author_commit/version-title.txt
+echo "当前版本文件改动情况:" > $webhook_title
 
 cd $author_commit
 for file in `ls -1 .`
@@ -106,15 +114,21 @@ do
 	author_name=`cat ${author_file} | head -n 1`
 	if [[ "${webhook_author_list[@]}" =~ "$author_name" ]] 
 	then
-		echo "$author_name"
+		if [[ "$mention_list" == "" ]] 
+		then
+			mention_list=$author_name
+		else
+			mention_list=$mention_list,$author_name
+		fi
 		count=`cat ${author_file} | wc -l`
 		file_count=`expr $count - 1`
-		webhook_title=${author_name}-title.txt
-		echo "开发(${author_name})当前版本改动${file_count}个文件, 列表文件:" > $webhook_title
-		$tool_path/webhook_sender.sh $webhook_key $webhook_title $author_name
+		echo "开发(${author_name})  修改文件:${file_count}" >> $webhook_title
 		$tool_path/webhook_upload.sh $webhook_key $author_file
 	fi
 done
+
+echo $mention_list
+$tool_path/webhook_sender.sh $webhook_key $webhook_title $mention_list
 	
 cd $tool_path
 

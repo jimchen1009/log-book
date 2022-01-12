@@ -1,6 +1,6 @@
 webhook_key=$1
 webhook_message=$2
-mentioned_list=$3
+mentioned_list=`echo $3 | sed -e 's/,/","/g'`
 
 webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${webhook_key}"
 
