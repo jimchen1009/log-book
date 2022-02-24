@@ -51,9 +51,8 @@ current0=`date "+%Y-%m-%d_%H%M%S"`
 temp_file=merge_branch_log${current0}.txt
 touch $temp_file
 
-#webhook_key="08ed176a-5c5d-4745-82a5-dd27c514e987"
 #以下是测试使用的
-webhook_key="d0cc20ff-b570-4142-80f7-46348b0337be"
+#webhook_key="d0cc20ff-b570-4142-80f7-46348b0337be"
 
 webhook_message=webhook_message.txt
 rm ${webhook_message}
