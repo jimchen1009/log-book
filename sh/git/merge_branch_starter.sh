@@ -44,25 +44,41 @@ then
 	mentioned_list="situqianmin,yangjiuzhou,chenpeijie1"
 fi
 
+
+tool_path=`pwd`
+git reset --quiet HEAD
+git checkout -- .
+cd ..
+no_change=`git stash save Jim $(date +%Y%m%d) | grep -E "No|没有"` #暂时使用这两个关键字
+git pull --rebase
+if [[ "$no_change" == "" ]] 
+then
+	git stash pop
+fi
+cd ..
+
 echo $allprojects
 echo $mentioned_list
 
+merge_filename=merge_branch_log.txt
+username=`git config user.name`
 current0=`date "+%Y-%m-%d_%H%M%S"`
-temp_file=merge_branch_log${current0}.txt
+temp_file=${tool_path}/merge_branch_log${current0}.txt
 touch $temp_file
 
 #以下是测试使用的
-#webhook_key="d0cc20ff-b570-4142-80f7-46348b0337be"
+#webhook_key=""
 
 webhook_message=webhook_message.txt
 rm ${webhook_message}
 touch ${webhook_message}
-echo "【服务端】开始合并【${from_branch}】到【${to_branch}】,配置【${config_branch}】为准,【暂停提交${to_branch}】." > ${webhook_message}
-./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
+
+echo "【服务端】开始合并【${from_branch}】到【${to_branch}】,配置【${config_branch}】为准\n【暂停提交${to_branch}】." > ${webhook_message}
+${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
 echo "" >> ${temp_file}
-echo "================================ 合并[${from_branch}]到[${to_branch}],配置[${config_branch}]为准,分支开始操作标记位置 [${current1}] ================================" >> ${temp_file}
+echo "================================ 合并[${from_branch}]到[${to_branch}], 配置[${config_branch}]为准, 操作的用户[${username}], 时间[${current1}] ================================" >> ${temp_file}
 echo "" >> ${temp_file}
 
 projects=(`echo $allprojects | tr ',' ' '`)
@@ -79,12 +95,10 @@ do
 		fi
 		conflict_branch=$config_branch
 	fi
-	./merge_branch.sh $project $from_branch $to_branch $conflict_branch $commit_none $temp_file
+	${tool_path}/merge_branch.sh $project $from_branch $to_branch $conflict_branch $commit_none $temp_file
 	echo -e "\033[33m-------------------------------------------------------------------------------------------------------------------------\033[0m\n"
 done
 
-debug_file=merge_branch_log.txt
-touch $debug_file
 cat $temp_file
 brief_meaage=`cat ${temp_file} | grep 提交 | grep 工程名`
 echo -e "\033[33m简要信息:\n${brief_meaage}\n\033[0m"
@@ -94,20 +108,25 @@ echo -e "\033[33m手动提交信息:\n${commit_meaage}\n\033[0m"
 echo -e "----->> \033[31m完成合并请输入: Okay \033[0m"
 read finishCode
 
+cd ${tool_path}
 if [[ "$finishCode" == Okay ]] 
 then
-	echo "【服务端】完成合并【${from_branch}】到【${to_branch}】,配置【${conflict_branch}】为准,【恢复提交${to_branch}】." > ${webhook_message}
+	echo "操作用户:${username}\n【服务端】完成合并【${from_branch}】到【${to_branch}】,配置【${conflict_branch}】为准\n【恢复提交${to_branch}】." > ${webhook_message}
 	conflit_json_files=`cat $temp_file | grep  -E "AA|UU|M" | grep ".json" | awk '{print "· "$0}' | sort`
 	#if [ -n "$conflit_json_files" ]; then
 	#	echo "配置存在冲突[部分多语言导致]:" >> ${webhook_message}
 	#	echo "$conflit_json_files" >> ${webhook_message}
 	#fi
-	cat $temp_file >> $debug_file
+	merge_file=${tool_path}/${merge_filename}
+	touch $merge_file
+	cat $temp_file >> $merge_file
 	rm -rf $temp_file
-	./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
+	${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 	#if [ -n "$conflit_json_files" ]; then
 	#	echo "【服务端】完成合并【${from_branch}】到【${to_branch}】,【恢复提交】." > ${webhook_message}
 	#	echo " 检查配置是否需要同步: AA|UU 完全冲突, M 未同步." >> ${webhook_message}
 	#	./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 	#fi
+	git commit ${merge_filename} -m '工具提交合并日志'
+	git pull
 fi

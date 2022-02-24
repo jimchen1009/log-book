@@ -3,23 +3,22 @@ from_branch=$2
 to_branch=$3
 conflict_branch=$4
 commit_none=$5
-log_file=$6
+filename=$6
 
 echo -e "\033[31m工程:${project}\033[0m"
-echo -e "\033[33m参数:\nfrom_branch: ${from_branch}\nto_branch: ${to_branch}\nconflict_branch: ${conflict_branch}\ncommit_none: ${commit_none}\033[0m"
+echo -e "\033[33m参数:\nfrom_branch: ${from_branch}\nto_branch: ${to_branch}\nconflict_branch: ${conflict_branch}\ncommit_none: ${commit_none}\nfilename: ${filename}\033[0m"
 
 path=`pwd`
-filename=$path/$log_file
-if [ ! -f "$filename" ]
-then
-	echo -e "\033[31m----->> 日志文件[$log_file]不存在.\033[0m"
-	exit 0
-fi
-
 dic_path=$path/$project
 if [ ! -d "$dic_path" ]; 
 then
 	echo -e "\033[31m----->> 工程目录[$project]不存在.\033[0m"
+	exit 0
+fi
+
+if [ ! -f "$filename" ]
+then
+	echo -e "\033[31m----->> 日志文件[$log_file]不存在.\033[0m"
 	exit 0
 fi
 
@@ -108,13 +107,13 @@ else
 				rm -rf ${name}
 			fi
 		done
-		git checkout -- .
-		IFS=$IFS_old     # 分隔符改回去 不影响下次使用
+		git checkout -- .	# 
+		IFS=$IFS_old     	# 分隔符改回去 不影响下次使用
 		check_changeV2=`git status -s` 
 		if [[ -z $check_changeV2 ]]
 		then
-			#git commit -m "Merge branch '${from_branch}' into ${to_branch}"
-			#git push
+			git commit -m "Merge branch '${from_branch}' into ${to_branch}"
+			git push
 			echo "工程名:[${project}] -- [自动]提交,撤销所有变更" >> ${filename}
 		else
 			echo "工程名:[${project}] -- [手动]提交,撤销变更错误" >> ${filename}
@@ -126,8 +125,8 @@ else
 		check_conflict=`git diff --name-only --diff-filter=U`
 		if [[ -z $check_conflict ]]
 		then
-			#git commit -m "Merge branch '${from_branch}' into ${to_branch}"
-			#git push
+			git commit -m "Merge branch '${from_branch}' into ${to_branch}"
+			git push
 			echo "工程名:[${project}] -- [自动]提交" >> ${filename}
 		else	
 			echo "工程名:[${project}] -- [手动]提交,冲突待解决" >> ${filename}
