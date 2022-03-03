@@ -2,11 +2,11 @@ project=$1
 from_branch=$2
 to_branch=$3
 conflict_branch=$4
-commit_none=$5
+to_branch_suffix=$5
 filename=$6
 
 echo -e "\033[31m工程:${project}\033[0m"
-echo -e "\033[33m参数:\nfrom_branch: ${from_branch}\nto_branch: ${to_branch}\nconflict_branch: ${conflict_branch}\ncommit_none: ${commit_none}\nfilename: ${filename}\033[0m"
+echo -e "\033[33m参数:\nfrom_branch: ${from_branch}\nto_branch: ${to_branch}\nconflict_branch: ${conflict_branch}\nto_branch_suffix: ${to_branch_suffix}\nfilename: ${filename}\033[0m"
 
 path=`pwd`
 dic_path=$path/$project
@@ -62,12 +62,12 @@ git rebase origin/$to_branch
 
 if [ ${to_branch} = ${conflict_branch} ] 
 then
-	echo -e "\033[33m-------->> 开始合并[$from_branch]分支内容到[$to_branch]分支,使用ours策略参数.\033[0m"
+	echo -e "\033[33m-------->> 开始合并[$from_branch]分支内容到[$to_branch]分支, 使用ours策略参数.\033[0m"
 	git merge --no-ff --no-commit --strategy-option ours $from_branch 
 else
 	if [ ${from_branch} = ${conflict_branch} ] 
 	then
-		echo -e "\033[33m-------->> 开始合并[$from_branch]分支内容到[$to_branch]分支,使用theirs策略参数.\033[0m"
+		echo -e "\033[33m-------->> 开始合并[$from_branch]分支内容到[$to_branch]分支, 使用theirs策略参数.\033[0m"
 		git merge --no-ff --no-commit --strategy-option theirs $from_branch 
 	else
 		echo -e "\033[33m-------->> 开始合并[$from_branch]分支内容到[$to_branch]分支.\033[0m"
@@ -88,11 +88,12 @@ then
 	echo "工程名:[${project}] -- [无需]提交" >> ${filename}
 else	
 	# 使用原来的分支代码, 忽略掉所有的修改
-	if [ ${commit_none} = yes ] 
+	if [ "$to_branch_suffix" != "empty" ] 
 	then
+		file_suffixes=(${to_branch_suffix//,/ }) 
 		echo "工程名:[${project}] -- 来源:[${from_branch}], 目标:[${to_branch}], 冲突为准:[${conflict_branch}], 撤销变更如下. " >> ${filename}
 		echo "${check_change}" >> ${filename}
-		echo -e "-------->> \033[33m撤销本地所有的变更,请耐心等待,执行中.......\033[0m"
+		echo -e "-------->> \033[33m撤销本地所有的变更, 请耐心等待, 执行中.......\033[0m"
 		IFS_old=$IFS      		# 记录老的分隔符
 		IFS=$'\n'              	# 以换行符作为分隔符
 		for fileline in `git status -s`
@@ -101,13 +102,26 @@ else
 			array=(`echo ${fileline} | awk '{printf("%s,%s",$1,$2)}'`) 
 			A=${array[0]}
 			name=${array[1]}
-			git reset --quiet HEAD ${name}
-			if [[ "$A" == "A" ]]
+			if [[ "$A" != "A" ]]
 			then
-				rm -rf ${name}
+				git reset --quiet HEAD ${name}
+				extension="${name##*.}"
+				if [[ ${name} != ${extension} ]]
+				then
+					for file_suffix in ${file_suffixes[@]}
+					do
+						if [[ ${file_suffix} = ${extension} ]]
+						then
+							git checkout -- ${name}
+							echo "撤销文件: ${fileline}"
+							break
+						fi
+					done
+				fi
+			else
+				echo "保留文件: ${fileline}"
 			fi
 		done
-		git checkout -- .	# 
 		IFS=$IFS_old     	# 分隔符改回去 不影响下次使用
 		check_changeV2=`git status -s` 
 		if [[ -z $check_changeV2 ]]

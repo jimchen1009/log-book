@@ -1,33 +1,101 @@
 
-#国服的工程
-local_projects=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-idip,pjg-picture
-#海外的工程
-bt_allprojects=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-pay,pjg-bgm,pjg-db-job
-#海外特有的工程
-btdev_projects=pjg-pay,pjg-bgm,pjg-db-job
 
-from_branch=$1
-to_branch=$2
+echo
+echo -e "\033[33m 						<ProjectG版本合并脚本>\033[0m"
+echo -e "\033[33m 	工具非正式版本, 处于测试阶段, 使用工具过程中请留意结果是否与预期一致.\033[0m"
+echo -e "\033[33m 	工程需要使用与工作不一致的目录[ProjectG], 因为脚本会强制还原本地修改.\033[0m"
+echo
+echo
 
-config_branch=$from_branch
-if [[ "$3" == config_from ]] 
+declare -a branchprojects
+declare -a branchnames
+branchnames[0]=国服
+branchnames[1]=海外
+branchnames[2]=海外特有工程
+branchnames[3]=配置文件
+branchprojects[0]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-idip,pjg-picture
+branchprojects[1]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-pay,pjg-bgm,pjg-db-job
+branchprojects[2]=pjg-pay,pjg-bgm,pjg-db-job
+branchprojects[3]=pjg-server-config
+
+tool_path=`pwd`
+#./git-checkout-head.sh
+cd ../..
+path=`pwd`
+
+
+#打印工程列表
+echo -e "----->> \033[31m以下是工程对应的编号: \033[0m"
+for (( i = 0 ; i < ${#branchnames[@]}; i++ ))
+do
+	echo -e "\033[33m$i = [${branchnames[$i]}] \033[0m"
+done
+read index 
+allprojects=${branchprojects[0]}
+if [[ "$index" != "" ]] 
 then
-	config_branch=$from_branch
+	allprojects=${branchprojects[$index]}
 fi
-if [[ "$3" == config_to ]] 
+
+if [[ -z $allprojects ]]
+then
+	echo -e "\033[31m无效的工程:${current_branch}, 回车退出\033[0m"
+	read
+	exit 0
+fi
+
+
+echo -e "\033[31m本地记录分支列表: \033[0m"
+cd $path/pjg-server-config
+declare -a branches
+for branch in `git for-each-ref --shell --format='%(refname:short)' refs/heads/`; do
+	value=${branch:1:${#branch}-2}
+	index=${#branches[@]}
+	echo -e "\033[33m$index = [$value] \033[0m"
+    branches[index]=$value
+done
+cd $path
+echo -e "\033[31m从分支 [FROM] 合并到分支 [TO], 配置以 [CONFIG] 为准.\033[0m"
+echo -e "\033[33mFROM  : 输入分支编号或者分支名称.\033[0m"
+echo -e "\033[33mTO    : 输入分支编号或者分支名称.\033[0m"
+echo -e "\033[33mCONFIG: 配置是TO分支为准输入to, 否则默认from.\033[0m"
+
+
+echo -e "\033[31m请输入参数FROM TO CONFIG 使用空格隔开, 确认无误再按回车: \033[0m"
+read parameters
+array=($parameters)
+
+#参数FROM
+from_branch=""
+read_from=${array[0]}
+if [ -n "$(echo $read_from| sed -n "/^[0-9]\+$/p")" ]
+then 
+    from_branch=${branches[$read_from]}
+else 
+    from_branch=${read_from}
+fi 
+
+#参数TO
+to_branch=""
+read_to=${array[1]}
+if [ -n "$(echo $read_to| sed -n "/^[0-9]\+$/p")" ]
+then 
+    to_branch=${branches[$read_to]}
+else 
+    to_branch=${read_to}
+fi 
+
+
+#参数CONFIG
+config_branch=NONE
+read_config=${array[2]}
+if [[ "$read_config" == to ]] 
 then
 	config_branch=$to_branch
 fi
-
-allprojects=$local_projects
-#allprojects=pjg-server-config
-if [[ "$4" == bt ]] 
+if [[ "$read_config" == from ]] 
 then
-	allprojects=$bt_allprojects
-fi
-if [[ "$4" == btdev ]] 
-then
-	allprojects=$btdev_projects
+	config_branch=$from_branch
 fi
 
 mentioned_list="@all"
@@ -44,19 +112,6 @@ then
 	mentioned_list="situqianmin,yangjiuzhou,chenpeijie1"
 fi
 
-
-tool_path=`pwd`
-git reset --quiet HEAD
-git checkout -- .
-cd ..
-no_change=`git stash save Jim $(date +%Y%m%d) | grep -E "No|没有"` #暂时使用这两个关键字
-git pull --rebase
-if [[ "$no_change" == "" ]] 
-then
-	git stash pop
-fi
-cd ..
-
 echo $allprojects
 echo $mentioned_list
 
@@ -66,14 +121,14 @@ current0=`date "+%Y-%m-%d_%H%M%S"`
 temp_file=${tool_path}/merge_branch_log${current0}.txt
 touch $temp_file
 
-#以下是测试使用的
-#webhook_key=""
+#以下是chenjingjun测试使用地址
+webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77"
 
 webhook_message=webhook_message.txt
 rm ${webhook_message}
 touch ${webhook_message}
 
-echo "【服务端】开始合并【${from_branch}】到【${to_branch}】,配置【${config_branch}】为准\n【暂停提交${to_branch}】." > ${webhook_message}
+echo "操作用户:${username}\n【服务端】开始合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【暂停提交${to_branch}】." > ${webhook_message}
 ${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
@@ -86,16 +141,16 @@ for (( i = 0 ; i < ${#projects[@]}; i++ ))
 do
 	project=${projects[$i]}
 	conflict_branch=NONE
-	commit_none=no
+	to_branch_suffix=empty
 	if [[ "$project" == pjg-server-config ]] 
 	then
 		if [[ $config_branch = $to_branch ]] 
 		then
-			commit_none=yes
+			to_branch_suffix=json
 		fi
 		conflict_branch=$config_branch
 	fi
-	${tool_path}/merge_branch.sh $project $from_branch $to_branch $conflict_branch $commit_none $temp_file
+	${tool_path}/merge_branch.sh $project $from_branch $to_branch $conflict_branch $to_branch_suffix $temp_file
 	echo -e "\033[33m-------------------------------------------------------------------------------------------------------------------------\033[0m\n"
 done
 
@@ -111,7 +166,7 @@ read finishCode
 cd ${tool_path}
 if [[ "$finishCode" == Okay ]] 
 then
-	echo "操作用户:${username}\n【服务端】完成合并【${from_branch}】到【${to_branch}】,配置【${conflict_branch}】为准\n【恢复提交${to_branch}】." > ${webhook_message}
+	echo "操作用户:${username}\n【服务端】完成合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【恢复提交${to_branch}】." > ${webhook_message}
 	conflit_json_files=`cat $temp_file | grep  -E "AA|UU|M" | grep ".json" | awk '{print "· "$0}' | sort`
 	#if [ -n "$conflit_json_files" ]; then
 	#	echo "配置存在冲突[部分多语言导致]:" >> ${webhook_message}
@@ -127,6 +182,6 @@ then
 	#	echo " 检查配置是否需要同步: AA|UU 完全冲突, M 未同步." >> ${webhook_message}
 	#	./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 	#fi
-	git commit ${merge_filename} -m '工具提交合并日志'
+	git commit ${merge_filename} -m '合并[${from_branch}]到[${to_branch}]的日志'
 	git pull
 fi

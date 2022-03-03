@@ -3,7 +3,7 @@ allprojects=$1
 from_branch=$2
 to_branch=$3
 conflict_branch=$4
-commit_none=$5
+to_branch_suffix=$5
 log_file=$6
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
@@ -15,7 +15,7 @@ projects=(`echo $allprojects | tr ',' ' '`)
 for (( i = 0 ; i < ${#projects[@]}; i++ ))
 do
 	project=${projects[$i]}
-	./merge_branch.sh $project $from_branch $to_branch $conflict_branch $commit_none $log_file
+	./merge_branch.sh $project $from_branch $to_branch $conflict_branch $to_branch_suffix $log_file
 	echo -e "\033[33m-------------------------------------------------------------------------------------------------------------------------\033[0m\n"
 done
 exit 0
