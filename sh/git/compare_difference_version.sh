@@ -61,6 +61,8 @@ cd $path
 
 current=`date "+%Y%m%d%H%M"`
 ssh_path=${path}/version
+rm -rf ${ssh_path}
+mkdir -p ${ssh_path}
 html_path=${ssh_path}/static/version/${current}
 rm -rf ${html_path}
 mkdir -p ${html_path}
@@ -130,8 +132,14 @@ do
 		git reset --hard ${version}
 		for file in `cat ${project_file}`
 		do
-			#python比较工具不优化, 显示差异有误导(BCompare等其他方式替换)
-			python ${tool_path}/diffhtml.py --commit-id ${version} --filename ${file} --version-path ${dic_path} --current-path ${current_path} --html-path ${html_path}/${project}
+			if [ "${file##*.}"x = "json"x ]
+			then
+				echo -e "\033[33m忽略比较文件 ${file}\033[0m"
+			else 
+				echo -e "\033[33m开始比较文件 ${file}\033[0m"
+				#python比较工具不优化, 显示差异有误导(BCompare等其他方式替换)
+				python ${tool_path}/diffhtml.py --commit-id ${version} --filename ${file} --version-path ${dic_path} --current-path ${current_path} --html-path ${html_path}/${project}
+			fi
 		done 
 		rm -rf ${project_file}
 		rm -rf ${current_path}
@@ -157,7 +165,7 @@ else
 	tar -czf version.tar.gz *
 	scp version.tar.gz root@10.17.2.62:/home/pjg/webhook
 	ssh root@10.17.2.62 "cd /home/pjg/webhook; tar -zxf version.tar.gz"
-	echo "版本差异部署地址: ${web_url}/version_files.html" > $webhook_title
+	echo "版本差异部署地址(忽略json): ${web_url}/version_files.html" > $webhook_title
 	cd $tool_path
 fi
 

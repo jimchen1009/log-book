@@ -11,15 +11,17 @@ declare -a branchprojects
 declare -a branchnames
 branchnames[0]=国服
 branchnames[1]=海外
-branchnames[2]=海外特有工程
-branchnames[3]=配置文件
+branchnames[2]=国服海外共有
+branchnames[3]=海外特有工程
+branchnames[4]=配置文件
 branchprojects[0]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-idip,pjg-picture
 branchprojects[1]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver,pjg-pay,pjg-bgm,pjg-db-job
-branchprojects[2]=pjg-pay,pjg-bgm,pjg-db-job
-branchprojects[3]=pjg-server-config
+branchprojects[2]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver
+branchprojects[3]=pjg-pay,pjg-bgm,pjg-db-job
+branchprojects[4]=pjg-server-config
 
 tool_path=`pwd`
-#./git-checkout-head.sh
+./git-checkout-head.sh
 cd ../..
 path=`pwd`
 
@@ -32,9 +34,11 @@ do
 done
 read index 
 allprojects=${branchprojects[0]}
+branchname=${branchnames[0]}
 if [[ "$index" != "" ]] 
 then
 	allprojects=${branchprojects[$index]}
+	branchname=${branchnames[$index]}
 fi
 
 if [[ -z $allprojects ]]
@@ -122,13 +126,13 @@ temp_file=${tool_path}/merge_branch_log${current0}.txt
 touch $temp_file
 
 #以下是chenjingjun测试使用地址
-webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77"
+#webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77"
 
 webhook_message=webhook_message.txt
 rm ${webhook_message}
 touch ${webhook_message}
 
-echo "操作用户:${username}\n【服务端】开始合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【暂停提交${to_branch}】." > ${webhook_message}
+echo "操作用户:${username}\n涉及工程:${branchname}\n【服务端】开始合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【暂停提交${to_branch}】." > ${webhook_message}
 ${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
@@ -157,7 +161,7 @@ done
 cat $temp_file
 brief_meaage=`cat ${temp_file} | grep 提交 | grep 工程名`
 echo -e "\033[33m简要信息:\n${brief_meaage}\n\033[0m"
-commit_meaage=`echo ${brief_meaage} | grep 手动`
+commit_meaage=`cat ${temp_file} | grep 手动 | grep 工程名`
 echo -e "\033[33m手动提交信息:\n${commit_meaage}\n\033[0m"
 
 echo -e "----->> \033[31m完成合并请输入: Okay \033[0m"
@@ -166,7 +170,7 @@ read finishCode
 cd ${tool_path}
 if [[ "$finishCode" == Okay ]] 
 then
-	echo "操作用户:${username}\n【服务端】完成合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【恢复提交${to_branch}】." > ${webhook_message}
+	echo "操作用户:${username}\n涉及工程:${branchname}\n【服务端】完成合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【恢复提交${to_branch}】." > ${webhook_message}
 	conflit_json_files=`cat $temp_file | grep  -E "AA|UU|M" | grep ".json" | awk '{print "· "$0}' | sort`
 	#if [ -n "$conflit_json_files" ]; then
 	#	echo "配置存在冲突[部分多语言导致]:" >> ${webhook_message}
@@ -182,6 +186,7 @@ then
 	#	echo " 检查配置是否需要同步: AA|UU 完全冲突, M 未同步." >> ${webhook_message}
 	#	./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
 	#fi
-	git commit ${merge_filename} -m '合并[${from_branch}]到[${to_branch}]的日志'
-	git pull
+	message="合并[${from_branch}]到[${to_branch}]的日志"
+	git commit ${merge_filename} -m ${message}
+	git push
 fi

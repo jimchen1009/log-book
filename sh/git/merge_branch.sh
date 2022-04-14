@@ -81,7 +81,7 @@ then
 	git checkout -- gradle.properties
 fi
 
-check_change=`git status -s` 
+check_change=`git status -suno` 
 if [[ -z $check_change ]]
 then
 	echo "工程名:[${project}] -- 来源:[${from_branch}], 目标:[${to_branch}], 冲突为准:[${conflict_branch}], 无变更内容. " >> ${filename}
@@ -123,7 +123,7 @@ else
 			fi
 		done
 		IFS=$IFS_old     	# 分隔符改回去 不影响下次使用
-		check_changeV2=`git status -s` 
+		check_changeV2=`git diff --name-only --diff-filter=U` 
 		if [[ -z $check_changeV2 ]]
 		then
 			git commit -m "Merge branch '${from_branch}' into ${to_branch}"
