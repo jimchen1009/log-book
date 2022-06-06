@@ -277,5 +277,5 @@
     {"id":36, "subId":36011, "name":"祭乐花车", "hp":0, "barrierId":331001021, "practiceBarrierId":0, "startDate":"2022-05-15 10:00:00", "endDate":"2022-05-16 10:00:00", "plotId":0, "passBonus":0, "pushBonus":0, "debuffId":0, "assistantId":0, "spareHeroId":0},
     {"id":36, "subId":36012, "name":"祭乐花车", "hp":0, "barrierId":331001031, "practiceBarrierId":0, "startDate":"2022-05-16 10:00:00", "endDate":"2022-05-17 10:00:00", "plotId":0, "passBonus":0, "pushBonus":0, "debuffId":0, "assistantId":0, "spareHeroId":0},
     {"id":36, "subId":36013, "name":"祭乐花车", "hp":0, "barrierId":331001011, "practiceBarrierId":0, "startDate":"2022-05-17 10:00:00", "endDate":"2022-05-18 10:00:00", "plotId":0, "passBonus":0, "pushBonus":0, "debuffId":0, "assistantId":0, "spareHeroId":0},
-    {"id":36, "subId":36014, "name":"祭乐花车", "hp":0, "barrierId":331001021, "practiceBarrierId":0, "startDate":"2022-05-18 10:00:00", "endDate":"2022-05-19 10:00:00", "plotId":0, "passBonus":0, "pushBonus":0, "debuffId":0, "assistantId":0, "spareHeroId":0}
+    {"id":36, "subId":36014, "name":"main修改", "hp":0, "barrierId":331001021, "practiceBarrierId":0, "startDate":"2022-05-18 10:00:00", "endDate":"2022-05-19 10:00:00", "plotId":0, "passBonus":0, "pushBonus":0, "debuffId":0, "assistantId":0, "spareHeroId":0}
 ]
