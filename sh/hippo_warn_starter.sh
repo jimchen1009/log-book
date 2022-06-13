@@ -22,17 +22,11 @@ echo -e "\033[31m请输入类型的编号. \033[0m"
 read index
 if [[ "$index" == "" ]] 
 then
-	echo -e "----->> \033[31m没有选择类型编号, 回车直接退出操作.\033[0m"
-	read
-	exit 0
+	log_warn=""
+else
+	log_warn=${log_warns[${index}]}
 fi
-log_warn=${log_warns[${index}]}
-if [[ "$log_warn" == "" ]] 
-then
-	echo -e "\033[31m类型不存在, 回车直接退出操作.\033[0m"
-	read
-	exit 0
-fi
+
 
 # 下面是默认的参数
 start_time=`date "+%Y-%m-%d 00:00:00"`
@@ -41,6 +35,7 @@ days=0
 hours=0
 range_hours=120 #默认拉取5天
 range_minutes=0
+filter_count=true
 
 if [[ "$log_warn" == "log" ]] 
 then
@@ -49,6 +44,7 @@ then
 	end_time=`date "+%Y-%m-%d 06:02:00"`
 	range_hours=0
 	range_minutes=1
+	filter_count=true
 else
 	start_time=""
 fi
@@ -66,45 +62,67 @@ then
 fi
 
 
-python_path="../../python/com/pjg"
+python_path="../python/com/pjg"
 
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
 echo -e "\033[33m--------------------------------------------耐心执行完毕---------------------------------------------------------\033[0m\n"
 
 path=`pwd`
-# 下载路径, 目前由于浏览器驱动原因用这个分隔符\
-download_path="C:\Users\chenjingjun\Desktop\hippo_warn"
+# 下载路径, 目前由于浏览器驱动原因用这个分隔符
+download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
 
-cd ${download_path}
-rm -rf *
-cd ${path}
+if [[ "$log_warn" != "" ]] 
+then
+	cd ${download_path}
+	rm -rf *
+	cd ${path}
+	python ${python_path}/hippo_file_download.py --log_warn ${log_warn} --start_time "${start_time}" --end_time "${end_time}" --days ${days} --hours ${hours} --range_hours ${range_hours} --range_minutes ${range_minutes} --download_path "${download_path}"
+	sleep 1s
+else
+    cd ${download_path}
+	echo -e "\033[33m下载路径中的文件:\033[0m"
+	for file in ./*
+	do
+		if test -f ${file}
+		then
+			echo -e "\033[33m${file}.\033[0m"
+		fi
+	done
+	cd ${path}
+fi
 
-python ${python_path}/hippo_file_download.py --log_warn ${log_warn} --start_time "${start_time}" --end_time "${end_time}" --days ${days} --hours ${hours} --range_hours ${range_hours} --range_minutes ${range_minutes} --download_path "${download_path}"
 
-sleep 1s
-
-# 过滤无效的内容, 如行为日志等
-cd ${download_path}
-for file in ./*
-do
-    if test -f ${file}
-    then
-		#cat ${file} | grep -v "_behavior.log" > ${file}
-		echo -e "\033[33m过滤文件:${file}.\033[0m"
-    fi
-done
-cd ${path}
-
-decode_path="${download_path}\decode"
+decode_path="${download_path}/decode"
+rm -rf ${decode_path}
 mkdir ${decode_path}
-echo "解码下载路径下的文件: ${decode_path}."
 python ${python_path}/hippo_file_decode.py --input_path "${download_path}" --output_path "${decode_path}"
 
 
 #总计报错
-count_path="${download_path}\count"
-python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}"
-echo "汇总报错结果路径: ${count_path}."
+count_path="${download_path}/count"
+rm -rf ${count_path}
+python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}" --filter_count=${filter_count}
 
-echo -e "\033[31m输入指令或者回车完成操作.\033[0m"
+
+
+echo -e "\033[31m输入指令Okay或者回车完成操作.\033[0m"
 read action_key
+if [[ "$action_key" == "Okay" ]] 
+then
+	webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
+	cd ${count_path}
+	tool_path="D:/demo/log-book/sh/git"
+	for file in `ls ${count_path}`
+	do
+		echo ${file} 
+		${tool_path}/webhook_upload.sh ${webhook_key} ${file}
+	done
+	cd ${path}
+	webhook_message=webhook_message.txt
+	rm -rf ${webhook_message}
+	touch ${webhook_message}
+	echo "当前报错汇总未执行【帮助执行】,【当周跟版开发】注意更新模板、留意报错.\nhttp://10.17.2.62:8000/version/arrange/#current-arrange" > ${webhook_message}
+	${tool_path}/webhook_sender.sh $webhook_key $webhook_message
+	rm -rf ${webhook_message}
+sleep 3
+fi
