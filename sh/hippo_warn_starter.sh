@@ -7,6 +7,18 @@ echo -e " 	3. 根据提示输入参数即可."
 echo -e " 	4. "
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
 
+# 机器人通知KEY
+webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77" 
+#webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
+# 需要保持登录的QQ账号
+qq="771129369"
+# 下载路径, 目前由于浏览器驱动原因用这个分隔符
+download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
+# 报错模板的位置, 需要w2获取最新
+pattern_path="C:/ProjectG/pjg-server/src/test/resources/tencent"
+# 工具目录
+tool_path="D:/demo/log-book/sh/git"
+
 
 declare -a log_warns
 log_warns[0]=log			#所有日志搜索
@@ -18,7 +30,7 @@ for (( i = 0 ; i < ${#log_warns[@]}; i++ ))
 do
 	echo -e "\033[33m$i = [${log_warns[$i]}] \033[0m"
 done
-echo -e "\033[31m请输入类型的编号. \033[0m"
+echo -e "\033[31m请输入类型的编号: \033[0m"
 read index
 if [[ "$index" == "" ]] 
 then
@@ -28,38 +40,83 @@ else
 fi
 
 
+declare -a begin_times
+begin_times[0]=`date "+%Y-%m-%d"`
+begin_times[1]=`date -d "1 days ago" "+%Y-%m-%d"`
+begin_times[2]=`date -d "2 days ago" "+%Y-%m-%d"`
+begin_times[3]=`date -d "3 days ago" "+%Y-%m-%d"`
+begin_times[4]=`date -d "4 days ago" "+%Y-%m-%d"`
+begin_times[5]=`date -d "5 days ago" "+%Y-%m-%d"`
+begin_times[6]=`date -d "6 days ago" "+%Y-%m-%d"`
+begin_times[7]=`date -d "7 days ago" "+%Y-%m-%d"`
+
+
 # 下面是默认的参数
-start_time=`date "+%Y-%m-%d 00:00:00"`
+start_time=${begin_times[0]}
 end_time=`date "+%Y-%m-%d %H:%M:%S"`
 days=0
 hours=0
-range_hours=120 #默认拉取5天
+range_hours=0 
 range_minutes=0
-filter_count=true
+range_seconds=0
+filter_count=false
 
-if [[ "$log_warn" == "log" ]] 
+
+if [[ "$log_warn" != "" ]] 
 then
-	#默认是周更日志,时间是6点开始
-	start_time=`date "+%Y-%m-%d 06:00:00"`
-	end_time=`date "+%Y-%m-%d 06:02:00"`
-	range_hours=0
-	range_minutes=1
-	filter_count=true
+	deafult_time=${start_time}
+	echo ""
+	echo -e "\033[31m开始时间编号列表: \033[0m"
+	for (( i = 0 ; i < ${#begin_times[@]}; i++ ))
+	do
+		time=${begin_times[$i]}
+		week=`date -d "${time}" +%A`
+		echo -e "\033[33m$i = [${time}, ${week}] \033[0m"
+	done
+	echo -e "\033[31m请输入日期编号与小时, 使用空格隔开, 例子: \033[0m"
+	echo -e "\033[33m0 6 (编号0的日期, 时间06:00:00) \033[0m"
+	echo -e "\033[33m2 9:10:00 (编号2的日期, 时间09:10:00) \033[0m"
+	read parameters
+	array=($parameters)
+	date_index=${array[0]}
+	date_hour=${array[1]}
+	if [ -n "$(echo $date_index| sed -n "/^[0-9]\+$/p")" ]
+	then
+		start_time=${begin_times[$date_index]}
+	fi
+	if [[ "$deafult_time" == "$start_time" ]] 
+	then
+		range_minutes=5
+		range_seconds=0
+	else
+		filter_count=true
+		range_hours=120
+	fi
+	if [ -n "$(echo $date_hour| sed -n "/^[0-9]\+$/p")" ]
+	then
+		start_time="${start_time} ${date_hour}:00:00"
+	else
+		start_time="${start_time} ${date_hour}"
+	fi
+	echo "下载日志的开始时间:${start_time}"
 else
-	start_time=""
+	echo "不执行日志下载, 使用目录日志文件"
 fi
-if [[ "$log_warn" == "log_day" ]] 
-then
-	echo -e "----->> \033[31m请输入需要日志的时长(天数). \033[0m"
-	read input_days
-	days=${input_days}
-fi
-if [[ "$log_warn" == "log_hour" ]] 
-then
-	echo -e "----->> \033[31m请输入需要日志的时长(小时). \033[0m"
-	read input_hours
-	hours=${input_hours}
-fi
+
+
+#if [[ "$log_warn" == "log_day" ]] 
+#then
+#	echo -e "----->> \033[31m请输入需要日志的时长(天数). \033[0m"
+#	read input_days
+#	days=${input_days}
+#fi
+#if [[ "$log_warn" == "log_hour" ]] 
+#then
+#	echo -e "----->> \033[31m请输入需要日志的时长(小时). \033[0m"
+#	read input_hours
+#	hours=${input_hours}
+#fi
+
 
 
 python_path="../../python/com/pjg"
@@ -68,15 +125,14 @@ echo -e "\033[33m---------------------------------------------------------------
 echo -e "\033[33m--------------------------------------------耐心执行完毕---------------------------------------------------------\033[0m\n"
 
 path=`pwd`
-# 下载路径, 目前由于浏览器驱动原因用这个分隔符
-download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
 
 if [[ "$log_warn" != "" ]] 
 then
 	cd ${download_path}
 	rm -rf *
 	cd ${path}
-	python ${python_path}/hippo_file_download.py --log_warn ${log_warn} --start_time "${start_time}" --end_time "${end_time}" --days ${days} --hours ${hours} --range_hours ${range_hours} --range_minutes ${range_minutes} --download_path "${download_path}"
+	python ${python_path}/hippo_file_download.py --qq ${qq} --log_warn ${log_warn} --start_time "${start_time}" --end_time "${end_time}" --days ${days} --hours ${hours} \
+	--range_hours ${range_hours} --range_minutes ${range_minutes} --range_seconds ${range_seconds} --download_path "${download_path}"
 	sleep 1s
 else
     cd ${download_path}
@@ -101,7 +157,7 @@ python ${python_path}/hippo_file_decode.py --input_path "${download_path}" --out
 #总计报错
 count_path="${download_path}/count"
 rm -rf ${count_path}
-python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}" --filter_count=${filter_count}
+python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}" --pattern_path=${pattern_path} --filter_count=${filter_count}
 
 
 
@@ -109,9 +165,7 @@ echo -e "\033[31m输入指令Okay或者回车完成操作.\033[0m"
 read action_key
 if [[ "$action_key" == "Okay" ]] 
 then
-	webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
 	cd ${count_path}
-	tool_path="D:/demo/log-book/sh/git"
 	for file in `ls ${count_path}`
 	do
 		echo ${file} 
