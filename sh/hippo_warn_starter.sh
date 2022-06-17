@@ -18,6 +18,8 @@ download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
 pattern_path="C:/ProjectG/pjg-server/src/test/resources/tencent"
 # 工具目录
 tool_path="D:/demo/log-book/sh/git"
+# 
+python_path="../../python/com/pjg"
 
 
 declare -a log_warns
@@ -61,10 +63,17 @@ range_minutes=0
 range_seconds=0
 filter_count=false
 
+if [[ "$log_warn" == "$log" ]] 
+then
+	range_minutes=5
+	range_seconds=0
+else
+	filter_count=true
+	range_hours=120
+fi
 
 if [[ "$log_warn" != "" ]] 
 then
-	deafult_time=${start_time}
 	echo ""
 	echo -e "\033[31m开始时间编号列表: \033[0m"
 	for (( i = 0 ; i < ${#begin_times[@]}; i++ ))
@@ -83,14 +92,6 @@ then
 	if [ -n "$(echo $date_index| sed -n "/^[0-9]\+$/p")" ]
 	then
 		start_time=${begin_times[$date_index]}
-	fi
-	if [[ "$deafult_time" == "$start_time" ]] 
-	then
-		range_minutes=5
-		range_seconds=0
-	else
-		filter_count=true
-		range_hours=120
 	fi
 	if [ -n "$(echo $date_hour| sed -n "/^[0-9]\+$/p")" ]
 	then
@@ -117,9 +118,6 @@ fi
 #	hours=${input_hours}
 #fi
 
-
-
-python_path="../../python/com/pjg"
 
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
 echo -e "\033[33m--------------------------------------------耐心执行完毕---------------------------------------------------------\033[0m\n"
@@ -175,7 +173,8 @@ then
 	webhook_message=webhook_message.txt
 	rm -rf ${webhook_message}
 	touch ${webhook_message}
-	echo "当前报错汇总未执行【帮助执行】,【当周跟版开发】注意更新模板、留意报错.\nhttp://10.17.2.62:8000/version/arrange/#current-arrange" > ${webhook_message}
+	usernanme=`git config user.name`
+	echo "操作者:【${usernanme}】,【当周跟版开发】注意更新模板、留意报错.\nhttp://10.17.2.62:8000/version/arrange/#current-arrange" > ${webhook_message}
 	${tool_path}/webhook_sender.sh $webhook_key $webhook_message
 	rm -rf ${webhook_message}
 sleep 3
