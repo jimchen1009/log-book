@@ -8,8 +8,8 @@ echo -e " 	4. "
 echo -e "\033[33m-----------------------------------------------------------------------------------------------------------------\033[0m\n"
 
 # 机器人通知KEY
-webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77" 
-#webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
+#webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77" 
+webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
 # 需要保持登录的QQ账号
 qq="771129369"
 # 下载路径, 目前由于浏览器驱动原因用这个分隔符
@@ -63,9 +63,9 @@ range_minutes=0
 range_seconds=0
 filter_count=false
 
-if [[ "$log_warn" == "$log" ]] 
+if [[ "$log_warn" == "log" ]] 
 then
-	range_minutes=5
+	range_minutes=10
 	range_seconds=0
 else
 	filter_count=true
