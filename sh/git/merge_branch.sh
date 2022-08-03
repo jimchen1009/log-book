@@ -50,15 +50,19 @@ echo -e "\033[33m-------->> 开始切换到[$from_branch]分支, 并且拉取最
 git checkout $from_branch
 git reset --hard origin/$from_branch
 git checkout .
-git pull --rebase
+git pull --rebase origin $from_branch 
 git rebase origin/$from_branch
 
 echo -e "\033[33m-------->> 开始切换到[$to_branch], 并且拉取最新代码.\033[0m"
+#不知道为啥ko创建后, 没有对应的记录
+git branch --set-upstream-to=origin/$to_branch $to_branch 
 git checkout $to_branch
 git reset --hard origin/$to_branch
 git checkout .
-git pull --rebase
+git pull --rebase origin $to_branch 
 git rebase origin/$to_branch
+to_branch_version=`git rev-parse HEAD`
+echo "工程名:[${project}] -- 合并前[${to_branch}]的commit版本号: ${to_branch_version}" >> ${filename}
 
 if [ ${to_branch} = ${conflict_branch} ] 
 then
@@ -110,7 +114,7 @@ else
 				then
 					for file_suffix in ${file_suffixes[@]}
 					do
-						if [[ ${file_suffix} = ${extension} ]]
+						if [[ ${file_suffix} == ${extension} ]]
 						then
 							git checkout -- ${name}
 							echo "撤销文件: ${fileline}"
@@ -127,7 +131,7 @@ else
 		if [[ -z $check_changeV2 ]]
 		then
 			git commit -m "Merge branch '${from_branch}' into ${to_branch}"
-			git push
+			git push --set-upstream origin ${to_branch}
 			echo "工程名:[${project}] -- [自动]提交,撤销所有变更" >> ${filename}
 		else
 			echo "工程名:[${project}] -- [手动]提交,撤销变更错误" >> ${filename}
@@ -140,7 +144,7 @@ else
 		if [[ -z $check_conflict ]]
 		then
 			git commit -m "Merge branch '${from_branch}' into ${to_branch}"
-			git push
+			git push --set-upstream origin ${to_branch}
 			echo "工程名:[${project}] -- [自动]提交" >> ${filename}
 		else	
 			echo "工程名:[${project}] -- [手动]提交,冲突待解决" >> ${filename}
