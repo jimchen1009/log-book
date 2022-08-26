@@ -17,9 +17,11 @@ download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
 # 报错模板的位置, 需要w2获取最新
 pattern_path="C:/ProjectG/pjg-server/src/test/resources/tencent"
 # 工具目录
-tool_path="D:/demo/log-book/sh/git"
+tool_path="E:/demo/log-book/sh/git"
 # 
 python_path="../../python/com/pjg"
+#
+nodtepad_path="E:/software/Notepad++/notepad++.exe"
 
 
 declare -a log_warns
@@ -158,8 +160,13 @@ rm -rf ${count_path}
 python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}" --pattern_path=${pattern_path} --filter_count=${filter_count}
 
 
-
 echo -e "\033[31m输入指令Okay或者回车完成操作.\033[0m"
+
+# 打开文件
+${nodtepad_path} ${count_path}/warn.log &
+${nodtepad_path} ${count_path}/other.log &
+
+
 read action_key
 if [[ "$action_key" == "Okay" ]] 
 then
