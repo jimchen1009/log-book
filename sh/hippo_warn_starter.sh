@@ -13,7 +13,7 @@ webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
 # 需要保持登录的QQ账号
 qq="771129369"
 # 下载路径, 目前由于浏览器驱动原因用这个分隔符
-download_path="C:/Users/chenjingjun/Desktop/hippo_warn"
+download_path="C:/Users/chenjingjun/Desktop/hippo_warn/download"
 # 报错模板的位置, 需要w2获取最新
 pattern_path="C:/ProjectG/pjg-server/src/test/resources/tencent"
 # 工具目录
@@ -181,7 +181,7 @@ then
 	rm -rf ${webhook_message}
 	touch ${webhook_message}
 	usernanme=`git config user.name`
-	echo "操作者:【${usernanme}】,【当周跟版开发】注意更新模板、留意报错.\nhttp://10.17.2.62:8000/version/arrange/#current-arrange" > ${webhook_message}
+	echo "操作者:【${usernanme}】,【当周跟版开发】留意留意报错汇总(5分钟内能查阅完毕).\nhttp://10.17.2.62:5173/" > ${webhook_message}
 	${tool_path}/webhook_sender.sh $webhook_key $webhook_message
 	rm -rf ${webhook_message}
 sleep 3
