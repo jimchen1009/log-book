@@ -1,8 +1,4 @@
 
-#测试使用
-webhook_key=""
-
-
 declare -a projectnames
 projectnames[0]=pjg-server-config
 projectnames[1]=pjg-rpc
@@ -14,10 +10,12 @@ projectnames[6]=pjg-http
 projectnames[7]=pjg-idip
 
 #开发通知列表
-webhook_author_list=(chenjingjun)
+webhook_author_list=(wuyizhou chenjingjun suyihang tanshikuan huangmaozhan zhuhaoliang)
+#webhook_author_list=(chenjingjun)
 
 
 tool_path=`pwd`
+./git-checkout-head.sh
 cd ../..
 path=`pwd`
 
@@ -149,6 +147,9 @@ do
 	echo ""
 done
 
+#默认写死路径
+start "C:\ProjectG-V0"
+
 echo
 echo -e "----->> \033[33m通过git查看文件差异, 关闭git再按回车结束操作. \033[0m"
 read 
@@ -165,7 +166,18 @@ else
 	tar -czf version.tar.gz *
 	scp version.tar.gz root@10.17.2.62:/home/pjg/webhook
 	ssh root@10.17.2.62 "cd /home/pjg/webhook; tar -zxf version.tar.gz"
-	echo "版本差异部署地址(忽略json): ${web_url}/version_files.html" > $webhook_title
+	echo "💡 版本差异部比较" > $webhook_title
+	for (( i = 0 ; i < ${#webhook_author_list[@]}; i++ ))
+	do
+		author=${webhook_author_list[$i]}
+		author_file=${author_commit}/${author}.txt
+		if [ -f ${author_file} ]
+		then
+			count=`cat ${author_file} | wc -l`
+			echo "${author}: **${count}**" >> $webhook_title
+		fi
+	done
+	echo "部署地址: [跳转链接](${web_url}/version_files.html)" >> $webhook_title
 	cd $tool_path
 fi
 
@@ -185,7 +197,7 @@ do
 done
 
 echo $author_names
-$tool_path/webhook_sender.sh $webhook_key $webhook_title $author_names
+$tool_path/webhooks_sender.sh 2 $webhook_title $author_names
 	
 
 echo ""

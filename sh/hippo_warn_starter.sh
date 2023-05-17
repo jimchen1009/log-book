@@ -14,6 +14,8 @@ webhook_key="bcd2d17e-878a-4648-8747-f56b7020dc06"
 qq="771129369"
 # 下载路径, 目前由于浏览器驱动原因用这个分隔符
 download_path="C:/Users/chenjingjun/Desktop/hippo_warn/download"
+# 解析的结果
+warn_path="C:/Users/chenjingjun/Desktop/hippo_warn"
 # 报错模板的位置, 需要w2获取最新
 pattern_path="C:/ProjectG/pjg-server/src/test/resources/tencent"
 # 工具目录
@@ -148,14 +150,14 @@ else
 fi
 
 
-decode_path="${download_path}/decode"
+decode_path="${warn_path}/decode"
 rm -rf ${decode_path}
 mkdir ${decode_path}
 python ${python_path}/hippo_file_decode.py --input_path "${download_path}" --output_path "${decode_path}"
 
 
 #总计报错
-count_path="${download_path}/count"
+count_path="${warn_path}/count"
 rm -rf ${count_path}
 python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --output_path "${count_path}" --pattern_path=${pattern_path} --filter_count=${filter_count}
 

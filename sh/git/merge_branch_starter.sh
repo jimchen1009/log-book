@@ -4,6 +4,7 @@ echo
 echo -e "\033[33m 						<ProjectG版本合并脚本>\033[0m"
 echo -e "\033[33m 	工具非正式版本, 处于测试阶段, 使用工具过程中请留意结果是否与预期一致.\033[0m"
 echo -e "\033[33m 	工程需要使用与工作不一致的目录[ProjectG], 因为脚本会强制还原本地修改.\033[0m"
+echo -e "\033[33m 	失误恢复分支: 1.开启force push权限 2.git reset --hard commitId 3.git push --force \033[0m"
 echo
 echo
 
@@ -19,6 +20,9 @@ branchprojects[1]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server
 branchprojects[2]=pjg-server-config,pjg-rpc,pjg-common,pjg-server,pjg-app-server,pjg-battle-server,pjg-http,routerserver
 branchprojects[3]=pjg-pay,pjg-bgm,pjg-db-job
 branchprojects[4]=pjg-server-config
+
+#流水线的工程
+pipelineprojects=(pjg-server-config pjg-rpc pjg-common pjg-server pjg-app-server pjg-battle-server pjg-http pjg-idip)
 
 tool_path=`pwd`
 ./git-checkout-head.sh
@@ -102,7 +106,7 @@ then
 	config_branch=$from_branch
 fi
 
-mentioned_list="@all"
+mentioned_list="maiwei,weikeyu"
 if [[ "$to_branch" == tw* ]] 
 then
 	mentioned_list="zouwei,wudi"
@@ -115,6 +119,10 @@ if [[ "$to_branch" == jp* ]]
 then
 	mentioned_list="situqianmin,yangjiuzhou,chenpeijie1"
 fi
+if [[ "$to_branch" == ko* ]] 
+then
+	mentioned_list="lijunying,yangjiuzhou,hejue"
+fi
 
 echo $allprojects
 echo $mentioned_list
@@ -125,15 +133,18 @@ current0=`date "+%Y-%m-%d_%H%M%S"`
 temp_file=${tool_path}/merge_branch_log${current0}.txt
 touch $temp_file
 
-#以下是chenjingjun测试使用地址
-#webhook_key="3b26de32-5b08-496e-9d6c-9e9214065f77"
 
 webhook_message=webhook_message.txt
 rm ${webhook_message}
 touch ${webhook_message}
 
-echo "操作用户:${username}\n涉及工程:${branchname}\n【服务端】开始合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【暂停提交${to_branch}】." > ${webhook_message}
-${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
+echo "💡 服务端分支合并开始" > ${webhook_message}
+echo "操作用户: ${username}" >> ${webhook_message}
+echo "涉及工程: ${branchname}" >> ${webhook_message}
+echo "来源分支: ${from_branch}" >> ${webhook_message}
+echo "目标分支: **${to_branch}** 暂停提交" >> ${webhook_message}
+echo "配置为准: **${config_branch}**" >> ${webhook_message}
+${tool_path}/webhooks_sender.sh 0 $webhook_message $mentioned_list
 
 current1=`date "+%Y-%m-%d %H:%M:%S"`
 echo "" >> ${temp_file}
@@ -152,7 +163,8 @@ do
 		then
 			to_branch_suffix=json
 		fi
-		conflict_branch=$config_branch
+		# 去掉参数,
+		#conflict_branch=$config_branch
 	fi
 	${tool_path}/merge_branch.sh $project $from_branch $to_branch $conflict_branch $to_branch_suffix $temp_file
 	echo -e "\033[33m-------------------------------------------------------------------------------------------------------------------------\033[0m\n"
@@ -162,7 +174,31 @@ cat $temp_file
 brief_meaage=`cat ${temp_file} | grep 提交 | grep 工程名`
 echo -e "\033[33m简要信息:\n${brief_meaage}\n\033[0m"
 commit_meaage=`cat ${temp_file} | grep 手动 | grep 工程名`
-echo -e "\033[33m手动提交信息:\n${commit_meaage}\n\033[0m"
+
+if [[ -z $commit_meaage ]]
+then
+	echo -e "\033[33m无冲突需要解决, 已执行提交.\n\033[0m"
+else
+	echo -e "\033[33m解决冲突并手动提交,详情:\n${commit_meaage}\n\033[0m"
+	if [ "$username" = "chenjingjun" ] 
+	then
+		start "C:\ProjectG-V0"
+	fi
+fi
+
+echo -e "----->> \033[31m打开pineline地址请输入: Okay \033[0m"
+read linkUrl
+if [[ "$linkUrl" == Okay ]] 
+then
+	for (( i = 0 ; i < ${#projects[@]}; i++ ))
+	do
+		project=${projects[$i]}
+		if [[ "${pipelineprojects[@]}"  =~ "${project}" ]]; 
+		then
+			start https://gitlab.bt/pjg/${project}/-/pipelines
+		fi
+	done
+fi
 
 echo -e "----->> \033[31m完成合并请输入: Okay \033[0m"
 read finishCode
@@ -170,7 +206,12 @@ read finishCode
 cd ${tool_path}
 if [[ "$finishCode" == Okay ]] 
 then
-	echo "操作用户:${username}\n涉及工程:${branchname}\n【服务端】完成合并【${from_branch}】到【${to_branch}】\n【${config_branch}】配置为准,【恢复提交${to_branch}】." > ${webhook_message}
+	echo "💡 服务端分支合并完成" > ${webhook_message}
+	echo "操作用户: ${username}" >> ${webhook_message}
+	echo "涉及工程: ${branchname}" >> ${webhook_message}
+	echo "来源分支: ${from_branch}" >> ${webhook_message}
+	echo "目标分支: **${to_branch}** 恢复提交" >> ${webhook_message}
+	echo "配置为准: **${config_branch}**" >> ${webhook_message}
 	conflit_json_files=`cat $temp_file | grep  -E "AA|UU|M" | grep ".json" | awk '{print "· "$0}' | sort`
 	#if [ -n "$conflit_json_files" ]; then
 	#	echo "配置存在冲突[部分多语言导致]:" >> ${webhook_message}
@@ -180,13 +221,8 @@ then
 	touch $merge_file
 	cat $temp_file >> $merge_file
 	rm -rf $temp_file
-	${tool_path}/webhook_sender.sh $webhook_key $webhook_message $mentioned_list
-	#if [ -n "$conflit_json_files" ]; then
-	#	echo "【服务端】完成合并【${from_branch}】到【${to_branch}】,【恢复提交】." > ${webhook_message}
-	#	echo " 检查配置是否需要同步: AA|UU 完全冲突, M 未同步." >> ${webhook_message}
-	#	./webhook_sender.sh $webhook_key $webhook_message $mentioned_list
-	#fi
-	message="合并[${from_branch}]到[${to_branch}]的日志"
+	${tool_path}/webhooks_sender.sh 1 $webhook_message $mentioned_list
+	message="${branchname},合并[${from_branch}]到[${to_branch}]的日志"
 	git commit ${merge_filename} -m ${message}
 	git push
 fi
