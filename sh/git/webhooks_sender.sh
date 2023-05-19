@@ -2,20 +2,23 @@
 declare -a webhooknames
 declare -a webhook_wx_keys
 declare -a webhook_fs_keys
+declare -A fs_user_ids
 
 #测试使用
-#webhook_wx_keys[0]="3b26de32-5b08-496e-9d6c-9e9214065f77"
+webhook_wx_keys[0]="3b26de32-5b08-496e-9d6c-9e9214065f77"
 webhook_fs_keys[0]="ab105da7-2cd3-444c-94ec-f6b8ecf55139"
 #总群
-#webhook_wx_keys[1]=""
-webhook_fs_keys[1]=""
+#webhook_wx_keys[1]="08ed176a-5c5d-4745-82a5-dd27c514e987"
+webhook_fs_keys[1]="49980b24-641d-427f-bbf5-3f43bbcefdca"
 #后端群
-#webhook_wx_keys[2]=""
-webhook_fs_keys[2]=""
+#webhook_wx_keys[2]="bcd2d17e-878a-4648-8747-f56b7020dc06"
+webhook_fs_keys[2]="53be5094-1c07-4e17-a8f0-22f6411f3055"
 
 webhook_wx_key=${webhook_wx_keys[$1]}
 webhook_fs_key=${webhook_fs_keys[$1]}
 
+#飞书UserId列表
+fs_user_ids["chenjingjun"]=""
 
 title=""
 content=""
@@ -33,7 +36,7 @@ do
 	fi
 done < $2
 
-mentioned_list=`echo $3 | sed -e 's/,/","/g'`	
+wx_user_list=`echo $3 | sed -e 's/,/","/g'`	
 generate_wx_data()
 {
   cat <<EOF
@@ -41,11 +44,25 @@ generate_wx_data()
 	"msgtype": "text",
 	"text": {
 		"content": "${title}\n${content}",
-		"mentioned_list":["$mentioned_list"]
+		"mentioned_list":["$wx_user_list"]
 	}
 }
 EOF
 }
+
+at_list=""
+fs_user_list=(`echo $3 | sed -e 's/,/ /g'`)
+for fs_user in ${fs_user_list[@]}
+do
+	fs_user_id=${fs_user_ids[$fs_user]}
+    echo "${fs_user}: ${fs_user_id}"
+	if [ -n "${fs_user_id}" ]
+	then
+		at_list="${at_list}<at id=${fs_user_id}></at>"
+	fi
+done
+echo "${at_list}"
+
 
 generate_fs_data()
 {
@@ -66,7 +83,7 @@ generate_fs_data()
 		"elements": [
 			{
 				"tag": "markdown",
-				"content": "$content"
+				"content": "${content}${at_list}"
 			}
 		]
 	}

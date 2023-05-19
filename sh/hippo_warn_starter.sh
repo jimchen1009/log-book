@@ -165,26 +165,24 @@ python ${python_path}/warn_pattern_count.py --input_path "${decode_path}" --outp
 echo -e "\033[31m输入指令Okay或者回车完成操作.\033[0m"
 
 # 打开文件
-${nodtepad_path} ${count_path}/warn.log &
-${nodtepad_path} ${count_path}/other.log &
+${nodtepad_path} ${count_path}/warn.txt &
+${nodtepad_path} ${count_path}/other.txt &
 
 
 read action_key
 if [[ "$action_key" == "Okay" ]] 
 then
-	cd ${count_path}
-	for file in `ls ${count_path}`
-	do
-		echo ${file} 
-		${tool_path}/webhook_upload.sh ${webhook_key} ${file}
-	done
-	cd ${path}
 	webhook_message=webhook_message.txt
 	rm -rf ${webhook_message}
 	touch ${webhook_message}
 	usernanme=`git config user.name`
-	echo "操作者:【${usernanme}】,【当周跟版开发】留意留意报错汇总(5分钟内能查阅完毕).\nhttp://10.17.2.62:5173/" > ${webhook_message}
-	${tool_path}/webhook_sender.sh $webhook_key $webhook_message
+	echo "线上报错统计" >> ${webhook_message}
+	echo "操作者: ${usernanme}" >> ${webhook_message}
+	echo "开始时间: **${start_time}**" >> ${webhook_message}
+	echo "截止时间: **${end_time}**" >> ${webhook_message}
+	${tool_path}/webhooks_upload.sh 0 ${count_path} ${webhook_message}
 	rm -rf ${webhook_message}
 sleep 3
 fi
+
+read input
