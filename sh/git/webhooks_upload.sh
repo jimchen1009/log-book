@@ -47,9 +47,6 @@ then
 		-d "@webhook_data_wx.txt"
 fi
 
-echo ${webhook_file}
-echo ${webhook_message}
-
 if [[ -n "$webhook_fs_key" ]]
 then
 	directory=`date "+%Y%m%d%H%M"`
@@ -61,7 +58,6 @@ then
 	else
 		for file in ${webhook_file}/*
 		do
-			echo ${file}
 			cp ${file} ${directory}
 		done
 	fi
@@ -77,7 +73,7 @@ then
 	scp ${directory}/upload.tar.gz root@10.17.2.62:/home/pjg/webhook/static/upload
 	ssh root@10.17.2.62 "cd /home/pjg/webhook/static/upload; tar -zxf upload.tar.gz"
 	rm -rf ${directory}
-	${tool_path}/webhooks_sender.sh 0 ${webhook_message}
+	${tool_path}/webhooks_sender.sh $1 ${webhook_message}
 fi
 
 

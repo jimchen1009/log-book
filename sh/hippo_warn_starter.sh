@@ -180,9 +180,7 @@ then
 	echo "操作者: ${usernanme}" >> ${webhook_message}
 	echo "开始时间: **${start_time}**" >> ${webhook_message}
 	echo "截止时间: **${end_time}**" >> ${webhook_message}
-	${tool_path}/webhooks_upload.sh 0 ${count_path} ${webhook_message}
+	${tool_path}/webhooks_upload.sh 2 ${count_path} ${webhook_message}
 	rm -rf ${webhook_message}
 sleep 3
 fi
-
-read input
